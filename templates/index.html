@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Instrument Gallery — Recognize &amp; Play</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<div class="gallery-frame">
+
+  <!-- ===== Header / Plaque ===== -->
+  <header class="museum-header">
+    <div class="header-inner">
+      <div class="header-mark">
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="20" cy="20" r="19" stroke="currentColor" stroke-width="1.2"/>
+          <path d="M13 27V13.5L20 10L27 13.5V27" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
+          <path d="M13 27H27" stroke="currentColor" stroke-width="1.2"/>
+          <circle cx="20" cy="19" r="3.2" stroke="currentColor" stroke-width="1.2"/>
+        </svg>
+      </div>
+      <div class="header-text">
+        <p class="eyebrow">Wing&nbsp;IV — Sound &amp; Music</p>
+        <h1>The Instrument Gallery</h1>
+      </div>
+      <nav class="header-nav">
+        <a href="#exhibit">Exhibit</a>
+        <a href="#collection">Collection</a>
+        <a href="#about">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ===== Hero / Exhibit (Upload + Recognition) ===== -->
+  <section class="exhibit" id="exhibit">
+    <div class="exhibit-intro">
+      <p class="placard-number">Exhibit&nbsp;01</p>
+      <h2>Bring an instrument to the pedestal.</h2>
+      <p class="exhibit-copy">
+        Photograph or upload an image of any instrument in our collection.
+        Our resident curator — a vision model trained on a million images —
+        will identify it, mount it in the display case below, and hand you
+        its placard, ready to play.
+      </p>
+    </div>
+
+    <div class="pedestal-wrap">
+      <div class="pedestal" id="dropzone">
+        <input type="file" id="fileInput" accept="image/*" hidden>
+        <div class="pedestal-glass">
+          <img id="previewImage" src="" alt="" hidden>
+          <div class="pedestal-empty" id="pedestalEmpty">
+            <svg width="56" height="56" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="8" y="14" width="40" height="30" rx="2" stroke="currentColor" stroke-width="1.4"/>
+              <circle cx="20" cy="24" r="3.5" stroke="currentColor" stroke-width="1.4"/>
+              <path d="M8 38L20 28L28 34L38 24L48 36" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+            </svg>
+            <p>Click, drop, or photograph an instrument</p>
+            <p class="pedestal-hint">JPG or PNG, up to 8MB</p>
+          </div>
+        </div>
+        <div class="pedestal-base"></div>
+      </div>
+
+      <div class="curator-panel" id="curatorPanel">
+        <div class="curator-idle" id="curatorIdle">
+          <p class="curator-label">Curator's Notes</p>
+          <p class="curator-msg">Awaiting an exhibit. Upload an image to begin identification.</p>
+        </div>
+
+        <div class="curator-loading" id="curatorLoading" hidden>
+          <div class="loader-bars"><span></span><span></span><span></span><span></span></div>
+          <p class="curator-msg">Examining the piece&hellip;</p>
+        </div>
+
+        <div class="curator-result" id="curatorResult" hidden>
+          <p class="placard-label">Now Identifying</p>
+          <h3 id="resultName">—</h3>
+          <p class="result-meta" id="resultMeta">—</p>
+          <p class="result-confidence" id="resultConfidence"></p>
+          <p class="result-desc" id="resultDesc"></p>
+          <p class="result-fact" id="resultFact"></p>
+          <button class="btn-primary" id="goToPlayBtn">Open Display Case ↓</button>
+          <button class="btn-text" id="notRightBtn">Not quite right? Choose manually</button>
+        </div>
+
+        <div class="curator-manual" id="curatorManual" hidden>
+          <p class="placard-label">Select the Instrument</p>
+          <div class="manual-grid" id="manualGrid"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Display Case (Playback) ===== -->
+  <section class="display-case" id="display-case" hidden>
+    <p class="placard-number">Exhibit&nbsp;02</p>
+    <h2 id="caseTitle">Display Case</h2>
+    <p class="exhibit-copy" id="caseSubtitle">Tap the placard below to hear how it sounds.</p>
+
+    <div class="case-frame">
+      <div class="case-instrument-name">
+        <span id="caseInstrumentName">—</span>
+        <span class="case-family" id="caseInstrumentFamily">—</span>
+      </div>
+
+      <div class="placard-strip" id="placardStrip"></div>
+
+      <div class="case-controls">
+        <label class="sustain-toggle">
+          <input type="checkbox" id="sustainToggle">
+          <span>Hold notes (sustain)</span>
+        </label>
+        <button class="btn-text" id="stopAllBtn">Silence the case</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Collection Grid ===== -->
+  <section class="collection" id="collection">
+    <p class="placard-number">Permanent Collection</p>
+    <h2>Fifteen Instruments on View</h2>
+    <p class="exhibit-copy">Browse the full collection directly — no photograph required.</p>
+
+    <div class="collection-grid">
+      {% for inst in instruments %}
+      <button class="collection-card" data-id="{{ inst.id }}">
+        <span class="card-family">{{ inst.family.split('(')[0].strip() }}</span>
+        <span class="card-name">{{ inst.display_name }}</span>
+        <span class="card-origin">{{ inst.origin }}</span>
+      </button>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- ===== About / Setup ===== -->
+  <section class="about" id="about">
+    <p class="placard-number">Curator's Office</p>
+    <h2>About This Exhibit</h2>
+    <p class="exhibit-copy">
+      Recognition is performed entirely in your browser using a pretrained
+      MobileNet vision model (TensorFlow.js) — no images are uploaded to a
+      server. Every note you hear is synthesized live with the Web Audio
+      API, tuned to the real pitches of each instrument's strings, keys, or
+      reeds.
+    </p>
+  </section>
+
+  <footer class="museum-footer">
+    <p>The Instrument Gallery — a self-contained exhibit. No server-side ML, no audio files, runs entirely offline after first load.</p>
+  </footer>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.1/dist/mobilenet.min.js"></script>
+<script type="application/json" id="instruments-data">{{ instruments | tojson | safe }}</script>
+<script>
+window.INSTRUMENTS_DATA = JSON.parse(document.getElementById('instruments-data').textContent);
+</script>
+<script src="{{ url_for('static', filename='js/audio-engine.js') }}"></script>
+<script src="{{ url_for('static', filename='js/recognition.js') }}"></script>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
